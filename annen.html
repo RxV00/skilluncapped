@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SkillUncapped</title>
+    <!-- Include Bootstrap CSS for improved UI -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Add CSS animation for the "DONE" message */
+         [MENTION=1053529]keyframe[/MENTION]s popOut {
+            0% {
+                transform: scale(0);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Style for the spinning Teemo head */
+        .teemo {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            width: 50px; /* Adjust the size as needed */
+            animation: spin 2s linear infinite; /* Apply a spin animation */
+        }
+
+         [MENTION=1053529]keyframe[/MENTION]s spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+<!-- Tutorial Text -->
+<p><strong></strong></p>
+<ol>
+    <li>
+        <code></code>
+        <code></code>.</li>
+    <li></li>
+    <li></li>
+</ol>
+
+<!-- Rest of the existing code -->
+<div class="container mt-4">
+    <div class="form-group">
+        <label for="url">URL:</label>
+        <input onkeyup="if (event.key =='Enter') stream()" class="form-control" style="width: 300px;" id="url" placeholder="" />
+    </div>
+    <div class="form-group">
+        <label for="resolution"></label>
+        <select id="resolution" class="form-control">
+            <option value="1500">720p</option>
+            <option value="2500">1080p</option>
+            <option value="4500">4k</option>
+            <!-- Add more resolution options as needed -->
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="videoName"></label>
+        <input type="text" id="videoName" class="form-control" placeholder="a" />
+    </div>
+    <button id = "btn" class="btn btn-primary" onclick="downloadAndMergeVideo()"></button>
+    <p class="text-danger mt-3" id="status"></p>
+</div>
+
+<!-- Spinning Teemo head -->
+<img src="https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.54LRWyXAtDilgLo-wuyVdQHaHI%26pid%3DApi&f=1&ipt=de4b9d470b5f196a83b5cff5bad60cffa4df5348c6eba567d7b26cc9ba53d77c&ipo=images" alt="Spinning Teemo Head" class="teemo">
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/ffmpeg.js/1.0.0/ffmpeg.min.js"></script>
+<script>
+    var hls = null;
+
+    if (Hls.isSupported()) {
+        var hlsjsConfig = {
+            "maxBufferSize": 0,
+            "maxBufferLength": 30,
+            "startPosition": 0
+        }
+        hls = new Hls(hlsjsConfig);
+        hls.on(Hls.Events.MANIFEST_PARSED, function () {
+            video.play();
+        });
+    }
+
+    const rgx = /([a-z0-9]{10})(:?\/|$)/g;
+
+    async function stream() {
+        // ... (Your existing stream function)
+
+        // Code to load the video stream using HLS
+    }
+
+    async function downloadAndMergeVideo() {
+        const rawUrl = document.getElementById("url").value;
+        const selectedResolution = document.getElementById("resolution").value;
+        const videoName = document.getElementById("videoName").value;
+
+        if (!videoName) {
+            document.getElementById("status").innerText = "Video ismi gir";
+            return;
+        }
+
+        let ids = [];
+        let match = null;
+
+        while ((match = rgx.exec(rawUrl))) {
+            ids.push(match[1]);
+        }
+
+        if (ids.length < 1) {
+            document.getElementById("status").innerText = "Linki koy pic";
+            return;
+        }
+
+        const videoId = rawUrl.includes("browse3") ? ids[0] : ids[ids.length - 1];
+
+        // Determine the last .ts file index (adjust the range as needed)
+        const lastFileIndex = 1000; // Assuming the last .ts file index is 1000, adjust as needed
+
+        // Create an array to hold the URLs of all .ts files
+        const tsUrls = [];
+
+        // Generate download links for all .ts files and collect their URLs
+        for (let i = 1; i <= lastFileIndex; i++) {
+            const tsUrl = `https://d13z5uuzt1wkbz.cloudfront.net/${videoId}/HIDDEN${selectedResolution}-${String(i).padStart(5, "0")}.ts`;
+            tsUrls.push(tsUrl);
+        }
+
+        // Reset status to "IN PROGRESS"
+        document.getElementById("status").innerText = "IN PROGRESS";
+
+        // Download all .ts files and store their content in an array
+        const tsFileContents = [];
+
+        for (const [index, tsUrl] of tsUrls.entries()) {
+            try {
+                const resp = await fetch(tsUrl);
+                if (resp.status === 200) {
+                    const tsData = await resp.arrayBuffer();
+                    tsFileContents.push(tsData);
+                } else {
+                    console.warn(`Failed to download ${tsUrl}, finishing download.`);
+                    break; // Stop downloading if any error occurs
+                }
+            } catch (e) {
+                console.warn(`Fetch failed for ${tsUrl}, finishing download.`);
+                break; // Stop downloading if any error occurs
+            }
+        }
+
+        if (tsFileContents.length === 0) {
+            document.getElementById("status").innerText = "No valid .ts files were downloaded.";
+            return;
+        }
+
+        // Merge all the .ts files into a single video using FFmpeg
+        const mergedVideoBlob = new Blob(tsFileContents, { type: 'video/mp2t' });
+
+        // Create a download link for the merged video
+        const downloadLink = document.createElement('a');
+        downloadLink.href = URL.createObjectURL(mergedVideoBlob);
+        downloadLink.download = `${videoName}.ts`; // Use the specified video name
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+
+        // Display "DONE" with a pop-out animation
+        document.getElementById("status").innerText = "DONE";
+        setTimeout(() => {
+            document.getElementById("status").innerText = ""; // Clear status
+        }, 1000);
+    }
+</script>
+</body>
+</html>
