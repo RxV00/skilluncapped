@@ -22,3 +22,4 @@ finally:
 time.sleep(4)
 ahmet = 'BrVidRow-0rrxwlwsdd'
 print(driver.find_element(By.XPATH,f"//*[@id='{ahmet}']/div/div[1]/div[2]/div/div[1]").get_attribute("innerText"))
+driver.find_element(By.XPATH,f"//*[@id='Page Global']/div[3]/div[8]/div/div/div[3]/div[2]/div[2]").click()

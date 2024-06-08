@@ -62,7 +62,8 @@ def linkiSik(link):
     
 def websiteac(link):
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
+    chrome_options.add_experimental_option("detach", True)
+    #chrome_options.add_argument("--headless=new")
     global driver
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(link)
@@ -73,10 +74,12 @@ def websiteac(link):
     finally:
         course.click()
     time.sleep(2)
-    search = driver.find_element(By.ID,masallahi_olan_id)
-    global datalar
-    datalar = driver.find_elements(By.CLASS_NAME,search.get_attribute('class'))
-    datacekme(datalar)
+    global data
+    data = driver.find_element(By.ID,masallahi_olan_id)
+    #global datalar
+    #datalar = search.find_element(By.XPATH,'..').find_elements(By.TAG_NAME,'div')
+    #print(search.find_element(By.XPATH,'..').get_attribute('class'))
+    datacekme()
 
 
 
@@ -90,16 +93,20 @@ def shorten_strings(input_text):
     output_text = "\n".join(output_list)
     output_text = output_text[:-1]
 
-def datacekme(datalar):
+def datacekme():
     numara = 1
     locate()
     global isimler
     isimler = set()
-    for data in datalar:
-        data.click()
+    data2 = data
+    while True:
+        data2.click()
+        print(data2.get_attribute('class'))
+        time.sleep(3)
         link = driver.current_url
         global isim
-        isim = driver.find_element(By.XPATH,f"/html/body/div[2]/div/div[3]/div[7]/div/div/div[3]/div[2]/div[{numara}]/div/div[1]/div[2]/div/div[1]").get_attribute('innerText')
+        ahmet = data2.get_attribute("id")
+        isim = driver.find_element(By.XPATH,f"//*[@id='{ahmet}']/div/div[1]/div[2]/div/div[1]").get_attribute("innerText")
         isimler.add(isim + ".ts")
         time.sleep(1)
         driver.execute_script("window.open('');")
@@ -114,12 +121,15 @@ def datacekme(datalar):
         numara +=1
         while driver.find_element(By.ID,'status').get_attribute('innerText') != "DONE":
             time.sleep(1)
-        time.sleep(0.5)
         driver.switch_to.window(driver.window_handles[0])
-    print(isimler)
+        time.sleep(1)
+        try:
+            driver.find_element(By.XPATH,f"/html/body/div[2]/div/div[3]/div[7]/div/div/div[3]/div[2]/div[{numara}]")
+            data2 = driver.find_element(By.XPATH,f"/html/body/div[2]/div/div[3]/div[7]/div/div/div[3]/div[2]/div[{numara}]")
+        except:
+            break
     driver.quit()
     dosyaya_koymaca()
-
 def locate():
     for r,d,f in os.walk("c:\\"):
         for files in f:

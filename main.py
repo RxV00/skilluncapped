@@ -62,7 +62,8 @@ def linkiSik(link):
     
 def websiteac(link):
     chrome_options = Options()
-    chrome_options.add_argument("--headless=new")
+    chrome_options.add_experimental_option("detach", True)
+    #chrome_options.add_argument("--headless=new")
     global driver
     driver = webdriver.Chrome(options=chrome_options)
     driver.get(link)
@@ -75,7 +76,8 @@ def websiteac(link):
     time.sleep(2)
     search = driver.find_element(By.ID,masallahi_olan_id)
     global datalar
-    datalar = driver.find_elements(By.CLASS_NAME,search.get_attribute('class'))
+    #search_class = search.get_attribute('class')
+    datalar = search.find_element(By.XPATH,'..').find_elements(By.XPATH,".//*")
     datacekme(datalar)
 
 
